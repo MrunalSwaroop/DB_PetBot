@@ -1,0 +1,44 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [uno_r4, xiao_1, xiao_2]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade platformio
+
+      - name: Build firmware
+        run: pio run -e ${{ matrix.environment }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.environment }}
+          path: |
+            .pio/build/${{ matrix.environment }}/firmware.bin
+            .pio/build/${{ matrix.environment }}/firmware.elf
+            .pio/build/${{ matrix.environment }}/partitions.bin
+          if-no-files-found: error

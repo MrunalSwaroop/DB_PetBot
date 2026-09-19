@@ -1,0 +1,15 @@
+devices:
+  UNO-R4:
+    board: uno_r4_wifi
+    features: [led_status]
+    channel: stable
+  XIAO-1:
+    board: xiao_esp32s3_cam
+    features: [led_status]
+    channel: stable
+  XIAO-2:
+    board: xiao_esp32s3_cam
+    features: [led_status]
+    channel: stable
+
+# Wi-Fi credentials do not belong in this file.

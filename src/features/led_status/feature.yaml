@@ -1,0 +1,12 @@
+name: led_status
+version: 0.1.0
+status: active
+purpose: Toggle the onboard status LED at a configurable interval.
+dependencies: []
+supported_boards:
+  - uno_r4_wifi
+  - xiao_esp32s3_cam
+configuration:
+  blink_interval_ms: 5000
+hardware:
+  - onboard_led
