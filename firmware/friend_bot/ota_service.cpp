@@ -8,7 +8,7 @@
 #if defined(ARDUINO_UNOR4_WIFI)
 #include <WiFiS3.h>
 #include <OTAUpdate.h>
-#include "ota_root_ca.h"
+#include "ota_raw_root_ca.h"
 #endif
 
 namespace {
@@ -143,7 +143,7 @@ void OtaService::tryRemoteUpdate() {
     return;
   }
 
-  ret = ota.setCACert(root_ca);
+  ret = ota.setCACert(raw_github_root_ca);
   if (ret != OTAUpdate::OTA_ERROR_NONE) {
     Serial.print("OTA bootstrap: certificate setup failed: ");
     Serial.println(ret);
