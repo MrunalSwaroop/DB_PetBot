@@ -75,9 +75,9 @@ jobs:
 
       - name: Compress and package UNO R4 OTA image
         run: |
-          python build/lzss/lzss.py --encode \
-            build/uno-r4/friend_bot.ino.bin \
-            build/uno-r4/friend_bot.ino.lzss
+          (cd build/lzss && python lzss.py --encode \
+            ../uno-r4/friend_bot.ino.bin \
+            ../uno-r4/friend_bot.ino.lzss)
           python scripts/bin2ota.py \
             build/uno-r4/friend_bot.ino.lzss \
             build/uno-r4/UNO-R4.ota
