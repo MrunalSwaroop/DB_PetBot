@@ -7,8 +7,7 @@ bin2ota.py utility for the UNOR4WIFI target.
 
 import argparse
 from pathlib import Path
-
-import crccheck.crc
+import zlib
 
 MAGIC_UNOR4WIFI = bytes.fromhex("02 10 41 23")
 VERSION_COMPRESSED = bytes.fromhex("00 00 00 00 00 00 00 40")
@@ -16,12 +15,13 @@ VERSION_COMPRESSED = bytes.fromhex("00 00 00 00 00 00 00 40")
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("input_bin", type=Path)
+    parser.add_argument("input_lzss", type=Path)
     parser.add_argument("output_ota", type=Path)
     args = parser.parse_args()
 
-    payload = MAGIC_UNOR4WIFI + VERSION_COMPRESSED + args.input_bin.read_bytes()
-    crc = crccheck.crc.Crc32.calc(payload)
+    compressed_payload = args.input_lzss.read_bytes()
+    payload = MAGIC_UNOR4WIFI + VERSION_COMPRESSED + compressed_payload
+    crc = zlib.crc32(payload) & 0xFFFFFFFF
     package = len(payload).to_bytes(4, "little") + crc.to_bytes(4, "little") + payload
     args.output_ota.write_bytes(package)
 

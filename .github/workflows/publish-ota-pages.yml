@@ -1,0 +1,99 @@
+name: Build and publish OTA firmware
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firmware/**'
+      - 'scripts/bin2ota.py'
+      - '.github/workflows/publish-ota-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install UNO R4 core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli core update-index
+          arduino-cli core install arduino:renesas_uno
+
+      - name: Generate CI version and OTA target
+        id: version
+        shell: bash
+        run: |
+          VERSION="0.4.${GITHUB_RUN_NUMBER}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          cat > firmware/friend_bot/ota_target.h <<EOF
+          #pragma once
+          #define APP_VERSION "${VERSION}"
+          #define OTA_UPDATE_URL "https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin"
+          #define OTA_TARGET_VERSION "${VERSION}"
+          EOF
+
+      - name: Compile UNO R4 WiFi firmware
+        run: |
+          arduino-cli compile \
+            --fqbn arduino:renesas_uno:unor4wifi \
+            --output-dir build/uno-r4 \
+            firmware/friend_bot
+
+      - name: Download Arduino’s official LZSS tool
+        run: |
+          mkdir -p build/lzss
+          curl --fail --location --silent --show-error \
+            https://raw.githubusercontent.com/arduino-libraries/ArduinoIoTCloud/master/extras/tools/lzss.py \
+            --output build/lzss/lzss.py
+          curl --fail --location --silent --show-error \
+            https://raw.githubusercontent.com/arduino-libraries/ArduinoIoTCloud/master/extras/tools/lzss.so \
+            --output build/lzss/lzss.so
+          chmod +x build/lzss/lzss.so
+
+      - name: Compress and package UNO R4 OTA image
+        run: |
+          python build/lzss/lzss.py --encode \
+            build/uno-r4/friend_bot.ino.bin \
+            build/uno-r4/friend_bot.ino.lzss
+          python scripts/bin2ota.py \
+            build/uno-r4/friend_bot.ino.lzss \
+            build/uno-r4/UNO-R4.ota
+          mkdir -p site/ota
+          cp build/uno-r4/UNO-R4.ota site/ota/UNO-R4.bin
+          printf '%s\n' '${{ steps.version.outputs.version }}' > site/ota/UNO-R4.version
+          printf '%s\n' 'Friend Bot OTA artifact' > site/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
