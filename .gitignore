@@ -8,3 +8,4 @@ __pycache__/
 .env.*
 *.local
 secrets/
+firmware/friend_bot/secrets.h

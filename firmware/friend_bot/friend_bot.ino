@@ -1,22 +1,43 @@
 /*
-  Friend Bot baseline firmware
+  Friend Bot Arduino IDE firmware
 
-  This intentionally keeps the user's original Arduino blink behavior:
-  one second ON, one second OFF.
-
-  Remote OTA support will be added in a later step. Until then, this sketch
-  is flashed over USB from Arduino IDE.
+  Current step: one-second onboard LED blink plus the first Wi-Fi/OTA
+  bootstrap service. Actual remote firmware download is enabled only after
+  Wi-Fi connectivity is verified on the UNO R4.
 */
 
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+
+#include "device_config.h"
+#include "ota_service.h"
+
+OtaService otaService;
+unsigned long lastBlinkMs = 0;
+bool ledState = false;
+
 void setup() {
-  // initialize digital pin LED_BUILTIN as an output.
+  Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  Serial.print("friend-bot starting | device=");
+  Serial.print(DEVICE_ID);
+  Serial.print(" | version=");
+  Serial.println(APP_VERSION);
+
+  otaService.begin();
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(1000);                      // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
-  delay(1000);                      // wait for a second
+  const unsigned long nowMs = millis();
+
+  if (nowMs - lastBlinkMs >= 1000UL) {
+    lastBlinkMs = nowMs;
+    ledState = !ledState;
+    digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+  }
+
+  otaService.update();
 }
