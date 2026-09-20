@@ -8,7 +8,7 @@
 #if defined(ARDUINO_UNOR4_WIFI)
 #include <WiFiS3.h>
 #include <OTAUpdate.h>
-#include "ota_amazon_root_ca.h"
+#include "ota_jsdelivr_root_ca.h"
 #endif
 
 namespace {
@@ -143,7 +143,7 @@ void OtaService::tryRemoteUpdate() {
     return;
   }
 
-  ret = ota.setCACert(amazon_root_ca);
+  ret = ota.setCACert(jsdelivr_root_ca);
   if (ret != OTAUpdate::OTA_ERROR_NONE) {
     Serial.print("OTA bootstrap: certificate setup failed: ");
     Serial.println(ret);
