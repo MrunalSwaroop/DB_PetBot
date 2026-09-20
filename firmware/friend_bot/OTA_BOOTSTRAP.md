@@ -25,4 +25,4 @@ The LED should continue toggling every second. Do not move the board to a remote
 
 After the first successful connection, future builds can omit `secrets.h`; the board will reuse its locally stored credentials. Do not erase EEPROM unless you intentionally want to provision new credentials.
 
-The first OTA test uses a local ignored `ota_target.h` containing a temporary release URL and target version. Do not commit that file. The GitHub deployment workflow will generate target configuration automatically after the direct test succeeds.
+The permanent OTA artifact is published by GitHub Actions at `https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin`. Copy `ota_target.example.h` to the ignored `ota_target.h`, then upload the bootstrap once over USB with the current target version. Do not commit `ota_target.h`.
