@@ -1,6 +1,8 @@
 #include "ota_service.h"
 
 #include <Arduino.h>
+#include <EEPROM.h>
+#include <cstring>
 #include "device_config.h"
 
 #if defined(ARDUINO_UNOR4_WIFI)
@@ -9,14 +11,40 @@
 
 namespace {
 constexpr unsigned long kWifiRetryIntervalMs = 10000UL;
+constexpr uint32_t kCredentialsMagic = 0x46504254UL;
+
+struct StoredCredentials {
+  uint32_t magic;
+  char ssid[33];
+  char password[65];
+};
+
+bool validCredentials(const StoredCredentials& stored) {
+  return stored.magic == kCredentialsMagic && stored.ssid[0] != '\0';
+}
 }
 
 void OtaService::begin() {
 #if defined(ARDUINO_UNOR4_WIFI)
   Serial.println("OTA bootstrap: starting Wi-Fi service");
 
-  if (WIFI_SSID[0] == '\0') {
-    Serial.println("OTA bootstrap: WIFI_SSID is empty; create secrets.h locally");
+  StoredCredentials stored{};
+  EEPROM.get(0, stored);
+
+  if (validCredentials(stored)) {
+    strncpy(ssid_, stored.ssid, sizeof(ssid_) - 1);
+    strncpy(password_, stored.password, sizeof(password_) - 1);
+    Serial.println("OTA bootstrap: using Wi-Fi credentials stored on board");
+  } else if (WIFI_SSID[0] != '\0') {
+    stored.magic = kCredentialsMagic;
+    strncpy(stored.ssid, WIFI_SSID, sizeof(stored.ssid) - 1);
+    strncpy(stored.password, WIFI_PASSWORD, sizeof(stored.password) - 1);
+    EEPROM.put(0, stored);
+    strncpy(ssid_, stored.ssid, sizeof(ssid_) - 1);
+    strncpy(password_, stored.password, sizeof(password_) - 1);
+    Serial.println("OTA bootstrap: stored Wi-Fi credentials on board");
+  } else {
+    Serial.println("OTA bootstrap: no Wi-Fi credentials stored; create secrets.h for first USB setup");
     return;
   }
 
@@ -34,7 +62,7 @@ void OtaService::begin() {
 
 void OtaService::update() {
 #if defined(ARDUINO_UNOR4_WIFI)
-  if (WIFI_SSID[0] == '\0' || wifiConnected_) {
+  if (ssid_[0] == '\0' || wifiConnected_) {
     return;
   }
 
@@ -47,9 +75,9 @@ void OtaService::update() {
   lastWifiRetryMs_ = nowMs;
 
   Serial.print("OTA bootstrap: connecting to ");
-  Serial.println(WIFI_SSID);
+  Serial.println(ssid_);
 
-  if (WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECTED) {
+  if (WiFi.begin(ssid_, password_) == WL_CONNECTED) {
     Serial.println("OTA bootstrap: Wi-Fi link connected; waiting for DHCP");
 
     const unsigned long dhcpStartMs = millis();
