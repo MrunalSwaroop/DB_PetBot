@@ -1,12 +1,14 @@
-# Friend Bot Firmware
+# DB_PetBot
 
-Greenfield modular firmware for one Arduino UNO R4 WiFi and two Seeed Studio XIAO ESP32-S3 camera boards.
+Desktop Bot Main file.
 
-## Current step
+## Firmware project
 
-This first step contains only the modular onboard LED feature. Each board variant should toggle its onboard LED every five seconds.
+This repository now also contains the greenfield modular firmware for one Arduino UNO R4 WiFi and two Seeed Studio XIAO ESP32-S3 camera boards.
 
-OTA, Wi-Fi provisioning, camera support, and bot features will be added in later steps after this build is verified on hardware.
+The current firmware step contains only the modular onboard LED feature. Each board variant should toggle its onboard LED every five seconds.
+
+OTA, Wi-Fi provisioning, camera support, and bot features will be added in later steps after this local build is verified on hardware.
 
 ## Build locally
 
@@ -29,3 +31,7 @@ The build matrix contains:
 - Release history: `docs/RELEASES.md`
 - Human-readable changes: `CHANGELOG.md`
 - Per-change notes: `docs/changes/`
+
+## Repository history
+
+The original repository README was preserved during the firmware project merge. Future firmware changes should follow `CONTRIBUTING.md` and remain modular under `src/features/`.
