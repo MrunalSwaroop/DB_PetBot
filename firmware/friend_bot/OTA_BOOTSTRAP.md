@@ -1,6 +1,6 @@
 # OTA bootstrap: current step
 
-This step does not download firmware yet. It adds the permanent service structure, stores the UNO R4 WiFi credentials locally after the first USB setup, and verifies that the board can connect without changing the one-second LED behavior.
+The bootstrap now has the first direct HTTPS OTA download path, but the first controlled update must be tested before the general per-device manifest workflow is enabled. It also stores the UNO R4 WiFi credentials locally after the first USB setup.
 
 ## Local setup
 
@@ -24,3 +24,5 @@ OTA bootstrap: remote download will be enabled in the next step
 The LED should continue toggling every second. Do not move the board to a remote location until the later update-download test succeeds.
 
 After the first successful connection, future builds can omit `secrets.h`; the board will reuse its locally stored credentials. Do not erase EEPROM unless you intentionally want to provision new credentials.
+
+The first OTA test uses a local ignored `ota_target.h` containing a temporary release URL and target version. Do not commit that file. The GitHub deployment workflow will generate target configuration automatically after the direct test succeeds.

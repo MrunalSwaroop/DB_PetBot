@@ -9,6 +9,7 @@
 - Five-device hardware matrix and Arduino IDE setup notes.
 - Initial UNO R4 WiFi OTA bootstrap service structure with local ignored Wi-Fi credentials.
 - UNO bootstrap now persists Wi-Fi credentials locally after first USB provisioning.
+- UNO R4 HTTPS OTA download, verification, and update path added for the first controlled test release.
 
 ### Planned
 

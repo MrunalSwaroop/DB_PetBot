@@ -4,6 +4,10 @@
 #include "secrets.h"
 #endif
 
+#if __has_include("ota_target.h")
+#include "ota_target.h"
+#endif
+
 // Device identity is compiled into the firmware and is not a secret.
 #ifndef DEVICE_ID
 #define DEVICE_ID "UNO-R4"
@@ -27,4 +31,12 @@
 // device-specific HTTPS manifest URL and the signed firmware update flow.
 #ifndef OTA_MANIFEST_URL
 #define OTA_MANIFEST_URL ""
+#endif
+
+#ifndef OTA_UPDATE_URL
+#define OTA_UPDATE_URL ""
+#endif
+
+#ifndef OTA_TARGET_VERSION
+#define OTA_TARGET_VERSION ""
 #endif

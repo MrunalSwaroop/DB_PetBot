@@ -7,6 +7,8 @@
 
 #if defined(ARDUINO_UNOR4_WIFI)
 #include <WiFiS3.h>
+#include <OTAUpdate.h>
+#include "ota_root_ca.h"
 #endif
 
 namespace {
@@ -62,7 +64,12 @@ void OtaService::begin() {
 
 void OtaService::update() {
 #if defined(ARDUINO_UNOR4_WIFI)
-  if (ssid_[0] == '\0' || wifiConnected_) {
+  if (ssid_[0] == '\0' || otaChecked_) {
+    return;
+  }
+
+  if (wifiConnected_) {
+    tryRemoteUpdate();
     return;
   }
 
@@ -99,5 +106,63 @@ void OtaService::update() {
   }
 #else
   // Other board backends will be added after the UNO bootstrap is verified.
+#endif
+}
+
+void OtaService::tryRemoteUpdate() {
+#if defined(ARDUINO_UNOR4_WIFI)
+  otaChecked_ = true;
+
+  if (OTA_UPDATE_URL[0] == '\0' || OTA_TARGET_VERSION[0] == '\0') {
+    Serial.println("OTA bootstrap: no update package configured");
+    return;
+  }
+
+  if (strcmp(APP_VERSION, OTA_TARGET_VERSION) == 0) {
+    Serial.print("OTA bootstrap: already running target version ");
+    Serial.println(OTA_TARGET_VERSION);
+    return;
+  }
+
+  Serial.print("OTA bootstrap: downloading version ");
+  Serial.println(OTA_TARGET_VERSION);
+
+  OTAUpdate ota;
+  int ret = ota.begin("/update.bin");
+  if (ret != OTAUpdate::OTA_ERROR_NONE) {
+    Serial.print("OTA bootstrap: ota.begin failed: ");
+    Serial.println(ret);
+    return;
+  }
+
+  ret = ota.setCACert(root_ca);
+  if (ret != OTAUpdate::OTA_ERROR_NONE) {
+    Serial.print("OTA bootstrap: certificate setup failed: ");
+    Serial.println(ret);
+    return;
+  }
+
+  const int otaSize = ota.download(OTA_UPDATE_URL, "/update.bin");
+  if (otaSize <= 0) {
+    Serial.print("OTA bootstrap: download failed: ");
+    Serial.println(otaSize);
+    return;
+  }
+
+  ret = ota.verify();
+  if (ret != OTAUpdate::OTA_ERROR_NONE) {
+    Serial.print("OTA bootstrap: package verification failed: ");
+    Serial.println(ret);
+    return;
+  }
+
+  ret = ota.update("/update.bin");
+  if (ret != OTAUpdate::OTA_ERROR_NONE) {
+    Serial.print("OTA bootstrap: update failed: ");
+    Serial.println(ret);
+    return;
+  }
+
+  Serial.println("OTA bootstrap: update accepted; board may reboot now");
 #endif
 }
