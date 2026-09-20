@@ -4,12 +4,13 @@
 
 ### Added
 
-- Greenfield modular firmware project.
-- Build variants for `UNO-R4`, `XIAO-1`, and `XIAO-2`.
-- `led_status` feature with a five-second onboard LED state-toggle interval.
+- Arduino IDE-compatible baseline sketch using the original one-second blink behavior.
+- Baseline target coverage for UNO R4 WiFi, two XIAO ESP32-S3 boards, NodeMCU ESP8266, and a generic ESP8266 module.
+- Five-device hardware matrix and Arduino IDE setup notes.
 
 ### Planned
 
-- Separate Wi-Fi provisioning.
-- HTTPS OTA updates and targeted deployment.
+- Per-device Wi-Fi provisioning.
+- HTTPS pull-based OTA updates.
+- GitHub Actions Arduino CLI build and manually targeted deployments.
 - XIAO camera feature.
