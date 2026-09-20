@@ -1,5 +1,9 @@
 #pragma once
 
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+
 // Device identity is compiled into the firmware and is not a secret.
 #ifndef DEVICE_ID
 #define DEVICE_ID "UNO-R4"
