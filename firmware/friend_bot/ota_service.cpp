@@ -143,7 +143,7 @@ void OtaService::tryRemoteUpdate() {
     return;
   }
 
-  ret = ota.setCACert(amazon_ota_root_ca);
+  ret = ota.setCACert(amazon_root_ca);
   if (ret != OTAUpdate::OTA_ERROR_NONE) {
     Serial.print("OTA bootstrap: certificate setup failed: ");
     Serial.println(ret);
