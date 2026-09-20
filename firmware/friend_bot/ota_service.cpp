@@ -50,10 +50,22 @@ void OtaService::update() {
   Serial.println(WIFI_SSID);
 
   if (WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECTED) {
-    wifiConnected_ = true;
-    Serial.print("OTA bootstrap: Wi-Fi connected, IP=");
-    Serial.println(WiFi.localIP());
-    Serial.println("OTA bootstrap: remote download will be enabled in the next step");
+    Serial.println("OTA bootstrap: Wi-Fi link connected; waiting for DHCP");
+
+    const unsigned long dhcpStartMs = millis();
+    while (millis() - dhcpStartMs < 15000UL) {
+      const IPAddress ip = WiFi.localIP();
+      if (ip[0] != 0 || ip[1] != 0 || ip[2] != 0 || ip[3] != 0) {
+        wifiConnected_ = true;
+        Serial.print("OTA bootstrap: Wi-Fi connected, IP=");
+        Serial.println(ip);
+        Serial.println("OTA bootstrap: remote download will be enabled in the next step");
+        return;
+      }
+      delay(250);
+    }
+
+    Serial.println("OTA bootstrap: DHCP did not assign an IP address yet");
   } else {
     Serial.println("OTA bootstrap: Wi-Fi connection attempt did not complete");
   }
