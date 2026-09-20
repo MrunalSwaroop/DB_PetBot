@@ -55,6 +55,14 @@ void OtaService::begin() {
     return;
   }
 
+  const String wifiFirmwareVersion = WiFi.firmwareVersion();
+  Serial.print("OTA bootstrap: Wi-Fi bridge firmware=");
+  Serial.println(wifiFirmwareVersion);
+  if (wifiFirmwareVersion < WIFI_FIRMWARE_LATEST_VERSION) {
+    Serial.print("OTA bootstrap: upgrade bridge firmware; recommended minimum=");
+    Serial.println(WIFI_FIRMWARE_LATEST_VERSION);
+  }
+
   lastWifiRetryMs_ = 0;
   update();
 #else
