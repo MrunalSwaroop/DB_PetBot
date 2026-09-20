@@ -150,36 +150,15 @@ void OtaService::tryRemoteUpdate() {
     return;
   }
 
-  const int otaSize = ota.startDownload(OTA_UPDATE_URL, "/update.bin");
+  const int otaSize = ota.download(OTA_UPDATE_URL, "/update.bin");
   if (otaSize <= 0) {
     Serial.print("OTA bootstrap: download failed: ");
     Serial.println(otaSize);
     return;
   }
 
-  Serial.print("OTA bootstrap: package size=");
+  Serial.print("OTA bootstrap: package downloaded=");
   Serial.println(otaSize);
-
-  int progress = 0;
-  unsigned long lastProgressPrintMs = 0;
-  while (progress < otaSize) {
-    progress = ota.downloadProgress();
-    if (progress < 0) {
-      Serial.print("OTA bootstrap: download progress failed: ");
-      Serial.println(progress);
-      return;
-    }
-
-    const unsigned long nowMs = millis();
-    if (nowMs - lastProgressPrintMs >= 1000UL || progress == otaSize) {
-      lastProgressPrintMs = nowMs;
-      Serial.print("OTA bootstrap: download progress=");
-      Serial.print(progress);
-      Serial.print("/");
-      Serial.println(otaSize);
-    }
-    delay(100);
-  }
 
   ret = ota.verify();
   if (ret != OTAUpdate::OTA_ERROR_NONE) {
