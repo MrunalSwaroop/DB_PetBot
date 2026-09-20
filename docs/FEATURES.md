@@ -4,7 +4,7 @@
 |---|---:|---|---|---|---|---|---|---|
 | `led_baseline` | 0.1.0 | Active | Yes | Yes | Yes | Yes | Yes | Original one-second Arduino blink sketch |
 | `wifi_provisioning` | — | Planned | Planned | Planned | Planned | Planned | Planned | Per-device credentials, never committed |
-| `ota_service` | 0.1.0 | Bootstrap | UNO Wi-Fi only | Planned | Planned | Planned | Planned | Connectivity verified first; firmware download comes next |
+| `ota_service` | 0.2.0 | Manifest active | UNO Wi-Fi only | Planned | Planned | Planned | Planned | GitHub Pages manifest check plus HTTPS OTA download |
 | `camera` | — | Planned | No | Planned | Planned | No | No | XIAO camera targets only |
 
 Feature details and change history are tracked under `docs/changes/` and `CHANGELOG.md`.

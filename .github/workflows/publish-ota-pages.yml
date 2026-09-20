@@ -52,7 +52,10 @@ jobs:
           #pragma once
           #define APP_VERSION "${VERSION}"
           #define OTA_UPDATE_URL "https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin"
-          #define OTA_TARGET_VERSION "${VERSION}"
+          #define OTA_MANIFEST_URL "https://mrunalswaroop.github.io/DB_PetBot/ota/manifest.json"
+          #define OTA_MANIFEST_HOST "mrunalswaroop.github.io"
+          #define OTA_MANIFEST_PATH "/DB_PetBot/ota/manifest.json"
+          #define OTA_TARGET_VERSION ""
           EOF
 
       - name: Compile UNO R4 WiFi firmware
@@ -84,6 +87,13 @@ jobs:
           mkdir -p site/ota
           cp build/uno-r4/UNO-R4.ota site/ota/UNO-R4.bin
           printf '%s\n' '${{ steps.version.outputs.version }}' > site/ota/UNO-R4.version
+          cat > site/ota/manifest.json <<EOF
+          {
+            "device": "UNO-R4",
+            "version": "${{ steps.version.outputs.version }}",
+            "firmware": "https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin"
+          }
+          EOF
           printf '%s\n' 'Friend Bot OTA artifact' > site/index.html
 
       - name: Configure GitHub Pages

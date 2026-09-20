@@ -25,4 +25,4 @@ The LED should continue toggling every second. Do not move the board to a remote
 
 After the first successful connection, future builds can omit `secrets.h`; the board will reuse its locally stored credentials. Do not erase EEPROM unless you intentionally want to provision new credentials.
 
-The permanent OTA artifact is published by GitHub Actions at `https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin`. Copy `ota_target.example.h` to the ignored `ota_target.h`, then upload the bootstrap once over USB with the current target version. Do not commit `ota_target.h`.
+The permanent OTA artifact is published by GitHub Actions at `https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin`, and the current version is advertised by `https://mrunalswaroop.github.io/DB_PetBot/ota/manifest.json`. Copy `ota_target.example.h` to the ignored `ota_target.h`, then upload the manifest-enabled bootstrap once over USB. Do not commit `ota_target.h`. After that, future firmware commits can publish a newer version automatically; the UNO checks the manifest at startup and downloads only when the manifest version is newer than its running version.

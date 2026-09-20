@@ -32,6 +32,12 @@
 #ifndef OTA_MANIFEST_URL
 #define OTA_MANIFEST_URL ""
 #endif
+#ifndef OTA_MANIFEST_HOST
+#define OTA_MANIFEST_HOST ""
+#endif
+#ifndef OTA_MANIFEST_PATH
+#define OTA_MANIFEST_PATH ""
+#endif
 
 #ifndef OTA_UPDATE_URL
 #define OTA_UPDATE_URL ""

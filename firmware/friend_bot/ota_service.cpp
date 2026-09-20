@@ -7,6 +7,7 @@
 
 #if defined(ARDUINO_UNOR4_WIFI)
 #include <WiFiS3.h>
+#include <WiFiSSLClient.h>
 #include <OTAUpdate.h>
 #include "ota_pages_root_ca.h"
 #endif
@@ -23,6 +24,32 @@ struct StoredCredentials {
 
 bool validCredentials(const StoredCredentials& stored) {
   return stored.magic == kCredentialsMagic && stored.ssid[0] != '\0';
+}
+
+bool parseVersion(const char* text, int& major, int& minor, int& patch) {
+  return text != nullptr && sscanf(text, "%d.%d.%d", &major, &minor, &patch) == 3;
+}
+
+bool isNewerVersion(const char* candidate, const char* current) {
+  int candidateMajor = 0;
+  int candidateMinor = 0;
+  int candidatePatch = 0;
+  int currentMajor = 0;
+  int currentMinor = 0;
+  int currentPatch = 0;
+
+  if (!parseVersion(candidate, candidateMajor, candidateMinor, candidatePatch) ||
+      !parseVersion(current, currentMajor, currentMinor, currentPatch)) {
+    return false;
+  }
+
+  if (candidateMajor != currentMajor) {
+    return candidateMajor > currentMajor;
+  }
+  if (candidateMinor != currentMinor) {
+    return candidateMinor > currentMinor;
+  }
+  return candidatePatch > currentPatch;
 }
 }
 
@@ -117,23 +144,118 @@ void OtaService::update() {
 #endif
 }
 
+bool OtaService::fetchManifestVersion(char* version, size_t versionSize) {
+#if defined(ARDUINO_UNOR4_WIFI)
+  if (OTA_MANIFEST_HOST[0] == '\0' || OTA_MANIFEST_PATH[0] == '\0') {
+    return false;
+  }
+
+  WiFiSSLClient client;
+  if (!client.connect(OTA_MANIFEST_HOST, 443)) {
+    Serial.println("OTA bootstrap: manifest connection failed");
+    return false;
+  }
+
+  client.print("GET ");
+  client.print(OTA_MANIFEST_PATH);
+  client.println(" HTTP/1.1");
+  client.print("Host: ");
+  client.println(OTA_MANIFEST_HOST);
+  client.println("Connection: close");
+  client.println();
+
+  const unsigned long requestStartMs = millis();
+  while (!client.available() && client.connected() &&
+         millis() - requestStartMs < 10000UL) {
+    delay(10);
+  }
+
+  if (!client.available()) {
+    client.stop();
+    Serial.println("OTA bootstrap: manifest response timeout");
+    return false;
+  }
+
+  const int statusCode = client.parseInt();
+  client.readStringUntil('\n');
+  if (statusCode != 200) {
+    client.stop();
+    Serial.print("OTA bootstrap: manifest HTTP status=");
+    Serial.println(statusCode);
+    return false;
+  }
+
+  while (client.connected()) {
+    const String headerLine = client.readStringUntil('\n');
+    if (headerLine == "\r" || headerLine.length() <= 1) {
+      break;
+    }
+  }
+
+  String body;
+  const unsigned long bodyStartMs = millis();
+  while (millis() - bodyStartMs < 10000UL) {
+    while (client.available()) {
+      body += static_cast<char>(client.read());
+    }
+    if (!client.connected() && !client.available()) {
+      break;
+    }
+    delay(10);
+  }
+  client.stop();
+
+  const int versionKey = body.indexOf("\"version\"");
+  const int colon = body.indexOf(':', versionKey);
+  const int firstQuote = body.indexOf('"', colon);
+  const int secondQuote = body.indexOf('"', firstQuote + 1);
+  if (versionKey < 0 || colon < 0 || firstQuote < 0 || secondQuote <= firstQuote) {
+    Serial.println("OTA bootstrap: manifest version missing");
+    return false;
+  }
+
+  const String remoteVersion = body.substring(firstQuote + 1, secondQuote);
+  remoteVersion.toCharArray(version, versionSize);
+  Serial.print("OTA bootstrap: manifest version=");
+  Serial.println(version);
+  return version[0] != '\0';
+#else
+  (void)version;
+  (void)versionSize;
+  return false;
+#endif
+}
+
 void OtaService::tryRemoteUpdate() {
 #if defined(ARDUINO_UNOR4_WIFI)
   otaChecked_ = true;
 
-  if (OTA_UPDATE_URL[0] == '\0' || OTA_TARGET_VERSION[0] == '\0') {
+  char remoteVersion[24] = {};
+  const bool manifestConfigured = OTA_MANIFEST_HOST[0] != '\0' &&
+                                  OTA_MANIFEST_PATH[0] != '\0';
+  const char* targetVersion = OTA_TARGET_VERSION;
+
+  if (manifestConfigured) {
+    if (!fetchManifestVersion(remoteVersion, sizeof(remoteVersion))) {
+      return;
+    }
+    if (!isNewerVersion(remoteVersion, APP_VERSION)) {
+      Serial.print("OTA bootstrap: already running version ");
+      Serial.println(APP_VERSION);
+      return;
+    }
+    targetVersion = remoteVersion;
+  } else if (OTA_UPDATE_URL[0] == '\0' || OTA_TARGET_VERSION[0] == '\0') {
     Serial.println("OTA bootstrap: no update package configured");
     return;
-  }
-
-  if (strcmp(APP_VERSION, OTA_TARGET_VERSION) == 0) {
+  } else if (strcmp(APP_VERSION, OTA_TARGET_VERSION) == 0) {
     Serial.print("OTA bootstrap: already running target version ");
     Serial.println(OTA_TARGET_VERSION);
     return;
   }
 
   Serial.print("OTA bootstrap: downloading version ");
-  Serial.println(OTA_TARGET_VERSION);
+  Serial.println(targetVersion);
 
   OTAUpdate ota;
   int ret = ota.begin("/update.bin");

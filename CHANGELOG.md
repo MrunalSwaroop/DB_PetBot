@@ -10,10 +10,12 @@
 - Initial UNO R4 WiFi OTA bootstrap service structure with local ignored Wi-Fi credentials.
 - UNO bootstrap now persists Wi-Fi credentials locally after first USB provisioning.
 - UNO R4 HTTPS OTA download, verification, and update path added for the first controlled test release.
+- UNO R4 now checks a GitHub Pages manifest at startup and downloads only newer firmware versions.
+- GitHub Actions now compiles, LZSS-compresses, packages, and publishes the UNO OTA artifact and manifest.
 
 ### Planned
 
 - Per-device Wi-Fi provisioning.
-- HTTPS pull-based OTA updates.
-- GitHub Actions Arduino CLI build and manually targeted deployments.
+- Per-device target selection in the deployment manifest.
+- XIAO ESP32-S3 and ESP8266 OTA backends.
 - XIAO camera feature.
