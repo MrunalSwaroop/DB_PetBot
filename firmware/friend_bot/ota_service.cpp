@@ -12,7 +12,7 @@
 #include "ota_pages_root_ca.h"
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include <NetworkClientSecure.h>
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
 #include <Preferences.h>
@@ -293,7 +293,7 @@ bool OtaService::fetchManifestVersion(char* version, size_t versionSize) {
     return false;
   }
 
-  WiFiClientSecure client;
+  NetworkClientSecure client;
   client.setCACert(pages_root_ca);
   HTTPClient http;
   if (!http.begin(client, OTA_MANIFEST_URL)) {
@@ -426,7 +426,7 @@ void OtaService::tryRemoteUpdate() {
   Serial.print("OTA bootstrap: downloading XIAO firmware version ");
   Serial.println(remoteVersion);
 
-  WiFiClientSecure client;
+  NetworkClientSecure client;
   client.setCACert(pages_root_ca);
   HTTPUpdate updater;
   updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
