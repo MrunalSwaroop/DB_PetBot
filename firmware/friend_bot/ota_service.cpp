@@ -294,14 +294,22 @@ bool OtaService::fetchManifestVersion(char* version, size_t versionSize) {
   }
 
   NetworkClientSecure client;
+  client.setHandshakeTimeout(10);
   client.setCACert(pages_root_ca);
   HTTPClient http;
+  http.setConnectTimeout(10000);
+  http.setTimeout(10000);
+  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+  http.useHTTP10(true);
+  Serial.println("OTA bootstrap: requesting XIAO HTTPS manifest");
   if (!http.begin(client, OTA_MANIFEST_URL)) {
     Serial.println("OTA bootstrap: manifest connection setup failed");
     return false;
   }
 
   const int statusCode = http.GET();
+  Serial.print("OTA bootstrap: manifest request result=");
+  Serial.println(statusCode);
   if (statusCode != HTTP_CODE_OK) {
     Serial.print("OTA bootstrap: manifest HTTP status=");
     Serial.println(statusCode);
