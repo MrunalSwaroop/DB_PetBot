@@ -33,7 +33,7 @@ void setup() {
 void loop() {
   const unsigned long nowMs = millis();
 
-  if (nowMs - lastBlinkMs >= 1000UL) {
+  if (nowMs - lastBlinkMs >= BLINK_INTERVAL_MS) {
     lastBlinkMs = nowMs;
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);

@@ -14,6 +14,7 @@
 - GitHub Actions now compiles, LZSS-compresses, packages, and publishes the UNO OTA artifact and manifest.
 - XIAO ESP32-S3 backend added using Arduino ESP32 dual-slot raw-binary OTA and the shared GitHub Pages manifest pattern.
 - CI now builds separate UNO `.ota` and XIAO `.bin` artifacts.
+- XIAO ESP32-S3 LED timing changed to a five-second complete cycle: 2.5 seconds HIGH and 2.5 seconds LOW.
 
 ### Planned
 

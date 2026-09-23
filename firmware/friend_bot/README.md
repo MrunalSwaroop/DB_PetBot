@@ -7,8 +7,8 @@ This is the modular Arduino IDE firmware base. It preserves the original Arduino
 | Device | Arduino IDE board selection | Expected LED behavior |
 |---|---|---|
 | UNO-R4 | Arduino UNO R4 WiFi | 1 second HIGH, 1 second LOW |
-| XIAO-1 | Seeed XIAO ESP32-S3 | 1 second HIGH, 1 second LOW; polarity may be inverted |
-| XIAO-2 | Seeed XIAO ESP32-S3 | 1 second HIGH, 1 second LOW; polarity may be inverted |
+| XIAO-1 | Seeed XIAO ESP32-S3 | 2.5 seconds HIGH, 2.5 seconds LOW; 5-second complete cycle; polarity may be inverted |
+| XIAO-2 | Seeed XIAO ESP32-S3 | 2.5 seconds HIGH, 2.5 seconds LOW; 5-second complete cycle; polarity may be inverted |
 | NODEMCU-1 | NodeMCU 1.0 (ESP-12E Module) | 1 second HIGH, 1 second LOW; onboard LED may be inverted |
 | ESP8266-1 | Generic ESP8266 Module | 1 second HIGH, 1 second LOW; module LED/pin depends on the carrier board |
 

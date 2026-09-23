@@ -21,6 +21,16 @@
 #define APP_VERSION "0.2.0-bootstrap"
 #endif
 
+// The XIAO LED stays in each state for 2.5 seconds, giving a five-second
+// complete HIGH/LOW cycle. The UNO keeps the original one-second timing.
+#ifndef BLINK_INTERVAL_MS
+#if defined(ARDUINO_ARCH_ESP32)
+#define BLINK_INTERVAL_MS 2500UL
+#else
+#define BLINK_INTERVAL_MS 1000UL
+#endif
+#endif
+
 // These defaults keep the repository buildable without credentials.
 // For a physical board, create secrets.h beside this file and define them there.
 #ifndef WIFI_SSID
