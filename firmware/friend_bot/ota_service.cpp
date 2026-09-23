@@ -435,8 +435,11 @@ void OtaService::tryRemoteUpdate() {
   Serial.println(remoteVersion);
 
   NetworkClientSecure client;
+  client.setHandshakeTimeout(30);
   client.setCACert(pages_root_ca);
-  HTTPUpdate updater;
+  // The XIAO may receive the binary through a slow or high-latency route.
+  // HTTPUpdate's default 8-second stream timeout is too aggressive here.
+  HTTPUpdate updater(120000);
   updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
   updater.rebootOnUpdate(true);
 
