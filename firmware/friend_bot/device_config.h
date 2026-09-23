@@ -10,7 +10,11 @@
 
 // Device identity is compiled into the firmware and is not a secret.
 #ifndef DEVICE_ID
+#if defined(ARDUINO_ARCH_ESP32)
+#define DEVICE_ID "XIAO-ESP32S3"
+#else
 #define DEVICE_ID "UNO-R4"
+#endif
 #endif
 
 #ifndef APP_VERSION

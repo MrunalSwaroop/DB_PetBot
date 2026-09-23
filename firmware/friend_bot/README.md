@@ -1,6 +1,6 @@
 # Friend Bot Arduino IDE firmware
 
-This is the simple USB-test baseline. It preserves the original Arduino blink sketch: the onboard LED is driven HIGH for one second and LOW for one second.
+This is the modular Arduino IDE firmware base. It preserves the original Arduino blink sketch: the onboard LED is driven HIGH for one second and LOW for one second. UNO R4 WiFi and XIAO ESP32-S3 have HTTPS manifest-driven OTA backends; the other boards remain USB-only until their backends are added.
 
 ## Supported Arduino IDE board selections
 
@@ -18,4 +18,10 @@ The exact ESP8266 module profile must be confirmed before flashing. A bare ESP-0
 
 Open `friend_bot.ino` in Arduino IDE. Install the board package required by the selected board, choose the board and serial port, then use **Upload**.
 
-This baseline does not contain Wi-Fi or OTA code yet. Do not move a board to a remote location until the later OTA bootstrap has been installed and tested.
+Do not move a board to a remote location until its Wi-Fi credentials and OTA bootstrap have been installed and tested.
+
+## XIAO ESP32-S3 OTA prerequisites
+
+Install the Espressif ESP32 board package and select `Seeed XIAO ESP32S3`. Keep the board’s flash size at `8MB` and select the `Default with SPIFFS` partition scheme. This scheme provides two OTA application slots; do not select `Maximum APP (No OTA/No FS)` for a remotely updated board.
+
+Copy `ota_target.xiao.example.h` to the ignored local file `ota_target.h`, add the local Wi-Fi credentials in `secrets.h`, and upload the first bootstrap over USB. No external circuit is required for this stage: the onboard LED and USB connection are sufficient. The camera module is not initialized yet, so no camera wiring or GPIO changes are introduced by the OTA base.

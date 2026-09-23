@@ -10,6 +10,13 @@
 #include <WiFiSSLClient.h>
 #include <OTAUpdate.h>
 #include "ota_pages_root_ca.h"
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <HTTPUpdate.h>
+#include <Preferences.h>
+#include "ota_pages_root_ca.h"
 #endif
 
 namespace {
@@ -92,6 +99,34 @@ void OtaService::begin() {
 
   lastWifiRetryMs_ = 0;
   update();
+#elif defined(ARDUINO_ARCH_ESP32)
+  Serial.println("OTA bootstrap: starting XIAO ESP32-S3 Wi-Fi service");
+
+  Preferences preferences;
+  preferences.begin("friendbot", false);
+  const String storedSsid = preferences.getString("ssid", "");
+  const String storedPassword = preferences.getString("password", "");
+
+  if (storedSsid.length() > 0) {
+    storedSsid.toCharArray(ssid_, sizeof(ssid_));
+    storedPassword.toCharArray(password_, sizeof(password_));
+    Serial.println("OTA bootstrap: using Wi-Fi credentials stored on board");
+  } else if (WIFI_SSID[0] != '\0') {
+    strncpy(ssid_, WIFI_SSID, sizeof(ssid_) - 1);
+    strncpy(password_, WIFI_PASSWORD, sizeof(password_) - 1);
+    preferences.putString("ssid", ssid_);
+    preferences.putString("password", password_);
+    Serial.println("OTA bootstrap: stored Wi-Fi credentials on board");
+  } else {
+    Serial.println("OTA bootstrap: no Wi-Fi credentials stored; create secrets.h for first USB setup");
+    preferences.end();
+    return;
+  }
+  preferences.end();
+
+  WiFi.mode(WIFI_STA);
+  lastWifiRetryMs_ = 0;
+  update();
 #else
   Serial.println("OTA bootstrap: Wi-Fi service not enabled for this board yet");
 #endif
@@ -139,6 +174,40 @@ void OtaService::update() {
   } else {
     Serial.println("OTA bootstrap: Wi-Fi connection attempt did not complete");
   }
+#elif defined(ARDUINO_ARCH_ESP32)
+  if (ssid_[0] == '\0' || otaChecked_) {
+    return;
+  }
+
+  if (wifiConnected_) {
+    tryRemoteUpdate();
+    return;
+  }
+
+  const unsigned long nowMs = millis();
+  if (wifiAttempted_ && nowMs - lastWifiRetryMs_ < kWifiRetryIntervalMs) {
+    return;
+  }
+
+  wifiAttempted_ = true;
+  lastWifiRetryMs_ = nowMs;
+  Serial.print("OTA bootstrap: connecting to ");
+  Serial.println(ssid_);
+  WiFi.begin(ssid_, password_);
+
+  const unsigned long connectStartMs = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - connectStartMs < 15000UL) {
+    delay(250);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    wifiConnected_ = true;
+    Serial.print("OTA bootstrap: Wi-Fi connected, IP=");
+    Serial.println(WiFi.localIP());
+    return;
+  }
+
+  Serial.println("OTA bootstrap: Wi-Fi connection attempt did not complete");
 #else
   // Other board backends will be added after the UNO bootstrap is verified.
 #endif
@@ -204,6 +273,44 @@ bool OtaService::fetchManifestVersion(char* version, size_t versionSize) {
     delay(10);
   }
   client.stop();
+
+  const int versionKey = body.indexOf("\"version\"");
+  const int colon = body.indexOf(':', versionKey);
+  const int firstQuote = body.indexOf('"', colon);
+  const int secondQuote = body.indexOf('"', firstQuote + 1);
+  if (versionKey < 0 || colon < 0 || firstQuote < 0 || secondQuote <= firstQuote) {
+    Serial.println("OTA bootstrap: manifest version missing");
+    return false;
+  }
+
+  const String remoteVersion = body.substring(firstQuote + 1, secondQuote);
+  remoteVersion.toCharArray(version, versionSize);
+  Serial.print("OTA bootstrap: manifest version=");
+  Serial.println(version);
+  return version[0] != '\0';
+#elif defined(ARDUINO_ARCH_ESP32)
+  if (OTA_MANIFEST_URL[0] == '\0') {
+    return false;
+  }
+
+  WiFiClientSecure client;
+  client.setCACert(pages_root_ca);
+  HTTPClient http;
+  if (!http.begin(client, OTA_MANIFEST_URL)) {
+    Serial.println("OTA bootstrap: manifest connection setup failed");
+    return false;
+  }
+
+  const int statusCode = http.GET();
+  if (statusCode != HTTP_CODE_OK) {
+    Serial.print("OTA bootstrap: manifest HTTP status=");
+    Serial.println(statusCode);
+    http.end();
+    return false;
+  }
+
+  const String body = http.getString();
+  http.end();
 
   const int versionKey = body.indexOf("\"version\"");
   const int colon = body.indexOf(':', versionKey);
@@ -297,5 +404,42 @@ void OtaService::tryRemoteUpdate() {
   }
 
   Serial.println("OTA bootstrap: update accepted; board may reboot now");
+#elif defined(ARDUINO_ARCH_ESP32)
+  otaChecked_ = true;
+
+  char remoteVersion[24] = {};
+  if (!fetchManifestVersion(remoteVersion, sizeof(remoteVersion))) {
+    return;
+  }
+
+  if (!isNewerVersion(remoteVersion, APP_VERSION)) {
+    Serial.print("OTA bootstrap: already running version ");
+    Serial.println(APP_VERSION);
+    return;
+  }
+
+  if (OTA_UPDATE_URL[0] == '\0') {
+    Serial.println("OTA bootstrap: no ESP32 update package configured");
+    return;
+  }
+
+  Serial.print("OTA bootstrap: downloading XIAO firmware version ");
+  Serial.println(remoteVersion);
+
+  WiFiClientSecure client;
+  client.setCACert(pages_root_ca);
+  HTTPUpdate updater;
+  updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+  updater.rebootOnUpdate(true);
+
+  const t_httpUpdate_return result = updater.update(client, OTA_UPDATE_URL, APP_VERSION);
+  if (result == HTTP_UPDATE_OK) {
+    Serial.println("OTA bootstrap: XIAO update accepted; board will reboot");
+  } else if (result == HTTP_UPDATE_NO_UPDATES) {
+    Serial.println("OTA bootstrap: XIAO server reported no update");
+  } else {
+    Serial.print("OTA bootstrap: XIAO update failed: ");
+    Serial.println(updater.getLastErrorString());
+  }
 #endif
 }

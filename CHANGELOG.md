@@ -12,10 +12,13 @@
 - UNO R4 HTTPS OTA download, verification, and update path added for the first controlled test release.
 - UNO R4 now checks a GitHub Pages manifest at startup and downloads only newer firmware versions.
 - GitHub Actions now compiles, LZSS-compresses, packages, and publishes the UNO OTA artifact and manifest.
+- XIAO ESP32-S3 backend added using Arduino ESP32 dual-slot raw-binary OTA and the shared GitHub Pages manifest pattern.
+- CI now builds separate UNO `.ota` and XIAO `.bin` artifacts.
 
 ### Planned
 
 - Per-device Wi-Fi provisioning.
 - Per-device target selection in the deployment manifest.
 - XIAO ESP32-S3 and ESP8266 OTA backends.
+- Camera feature and external GPIO wiring.
 - XIAO camera feature.

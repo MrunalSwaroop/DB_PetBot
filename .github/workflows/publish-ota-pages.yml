@@ -41,6 +41,7 @@ jobs:
           arduino-cli config init --overwrite
           arduino-cli core update-index
           arduino-cli core install arduino:renesas_uno
+          arduino-cli core install esp32:esp32
 
       - name: Generate CI version and OTA target
         id: version
@@ -92,6 +93,34 @@ jobs:
             "device": "UNO-R4",
             "version": "${{ steps.version.outputs.version }}",
             "firmware": "https://mrunalswaroop.github.io/DB_PetBot/ota/UNO-R4.bin"
+          }
+          EOF
+          cat > firmware/friend_bot/ota_target.h <<EOF
+          #pragma once
+          #define APP_VERSION "${{ steps.version.outputs.version }}"
+          #define OTA_UPDATE_URL "https://mrunalswaroop.github.io/DB_PetBot/ota/XIAO-ESP32S3.bin"
+          #define OTA_MANIFEST_URL "https://mrunalswaroop.github.io/DB_PetBot/ota/xiao-esp32s3-manifest.json"
+          #define OTA_MANIFEST_HOST "mrunalswaroop.github.io"
+          #define OTA_MANIFEST_PATH "/DB_PetBot/ota/xiao-esp32s3-manifest.json"
+          #define OTA_TARGET_VERSION ""
+          EOF
+
+      - name: Compile XIAO ESP32-S3 firmware
+        run: |
+          arduino-cli compile \
+            --fqbn esp32:esp32:XIAO_ESP32S3 \
+            --output-dir build/xiao-esp32s3 \
+            firmware/friend_bot
+
+      - name: Publish XIAO ESP32-S3 OTA image
+        run: |
+          cp build/xiao-esp32s3/friend_bot.ino.bin site/ota/XIAO-ESP32S3.bin
+          printf '%s\n' '${{ steps.version.outputs.version }}' > site/ota/XIAO-ESP32S3.version
+          cat > site/ota/xiao-esp32s3-manifest.json <<EOF
+          {
+            "device": "XIAO-ESP32S3",
+            "version": "${{ steps.version.outputs.version }}",
+            "firmware": "https://mrunalswaroop.github.io/DB_PetBot/ota/XIAO-ESP32S3.bin"
           }
           EOF
           printf '%s\n' 'Friend Bot OTA artifact' > site/index.html
